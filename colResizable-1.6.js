@@ -36,7 +36,7 @@
     
 	
 	//append required CSS rules  
-    h.append("<style type='text/css'>  .JColResizer{table-layout:fixed;} .JColResizer > tbody > tr > td, .JColResizer > tbody > tr > th{overflow:hidden}  .JPadding > tbody > tr > td, .JPadding > tbody > tr > th{padding-left:0!important; padding-right:0!important;} .JCLRgrips{ height:0px; position:relative;} .JCLRgrip{margin-left:-5px; position:absolute; z-index:5; } .JCLRgrip .JColResizer{position:absolute;background-color:red;filter:alpha(opacity=1);opacity:0;width:10px;height:100%;cursor: col-resize;top:0px} .JCLRLastGrip{position:absolute; width:1px; } .JCLRgripDrag{ border-left:1px dotted black;	} .JCLRFlex{width:auto!important;} .JCLRgrip.JCLRdisabledGrip .JColResizer{cursor:default; display:none;}</style>");
+    h.append("<style type='text/css'>  .JColResizer{} .JColResizer > tbody > tr > td, .JColResizer > tbody > tr > th{overflow:hidden}  .JPadding > tbody > tr > td, .JPadding > tbody > tr > th{padding-left:0!important; padding-right:0!important;} .JCLRgrips{ height:0px; position:relative;} .JCLRgrip{margin-left:-5px; position:absolute; z-index:5; } .JCLRgrip .JColResizer{position:absolute;background-color: #3d92d2;filter:alpha(opacity=1);opacity:1;width:8px;height:100%;cursor: col-resize;top:0px;left: -5px;} .JCLRLastGrip{position:absolute; width:1px; } .JCLRgripDrag{ border-left:1px dotted black;	} .JCLRFlex{width:auto!important;} .JCLRgrip.JCLRdisabledGrip .JColResizer{cursor:default; display:none;}</style>");
 
 	
 	/**
@@ -92,14 +92,27 @@
 		t.cg = t.find("col"); 						//a table can also contain a colgroup with col elements		
 		t.ln = th.length;							//table length is stored	
 		if(t.p && S && S[t.id])memento(t,th);		//if 'postbackSafe' is enabled and there is data for the current table, its coloumn layout is restored
+		fv = null
 		th.each(function(i){						//iterate through the table column headers			
 			var c = $(this); 						//jquery wrap for the current column		
             var dc = t.dc.indexOf(i)!=-1;           //is this a disabled column?
 			var g = $(t.gc.append('<div class="JCLRgrip"></div>')[0].lastChild); //add the visual node to be used as grip
             g.append(dc ? "": t.opt.gripInnerHtml).append('<div class="'+SIGNATURE+'"></div>');
+            if (i==0){
+            	fv = g;
+			}
             if(i == t.ln-1){                        //if the current grip is the las one 
                 g.addClass("JCLRLastGrip");         //add a different css class to stlye it in a different way if needed
                 if(t.f) g.html("");                 //if the table resizing mode is set to fixed, the last grip is removed since table with can not change
+                // var clickEvent = new Event('mousedown', {
+                //     'view': window,
+                //     'bubbles': true,
+                //     'cancelable': true
+                // });
+                // fv[0].dispatchEvent(clickEvent);
+                // setTimeout(function(){
+                 //    $(fv).mouseup();
+				// }, 3000);
             }
             g.bind('touchstart mousedown', onGripMouseDown); //bind the mousedown event to start dragging 
             
@@ -174,15 +187,17 @@
 	 * Function that places each grip in the correct position according to the current table layout	 
 	 * @param {jQuery ref} t - table object
 	 */
-	var syncGrips = function (t){	
-		t.gc.width(t.w);			//the grip's container width is updated				
-		for(var i=0; i<t.ln; i++){	//for each column
-			var c = t.c[i]; 			
-			t.g[i].css({			//height and position of the grip is updated according to the table layout
-				left: c.offset().left - t.offset().left + c.outerWidth(false) + t.cs / 2 + PX,
-				height: t.opt.headerOnly? t.c[0].outerHeight(false) : t.outerHeight(false)				
-			});			
-		} 	
+	var syncGrips = function (t){
+		setTimeout(function(){
+            t.gc.width(t.w);			//the grip's container width is updated
+            for(var i=0; i<t.ln; i++){	//for each column
+                var c = t.c[i];
+                t.g[i].css({			//height and position of the grip is updated according to the table layout
+                    left: c.offset().left - t.offset().left + c.outerWidth(false) + t.cs / 2 + PX,
+                    height: t.opt.headerOnly? t.c[0].outerHeight(false) : t.outerHeight(false)
+                });
+            }
+        }, 1)
 	};
 	
 	
@@ -318,7 +333,6 @@
         g.ox = oe? oe[0].pageX: e.pageX;            //the initial position is kept
 		g.l = g.position().left;
         g.x = g.l;
-        
 		d.bind('touchmove.'+SIGNATURE+' mousemove.'+SIGNATURE, onGripDrag ).bind('touchend.'+SIGNATURE+' mouseup.'+SIGNATURE, onGripDragOver);	//mousemove and mouseup events are bound
 		h.append("<style type='text/css'>*{cursor:"+ t.opt.dragCursor +"!important}</style>"); 	//change the mouse cursor
 		g.addClass(t.opt.draggingClass); 	//add the dragging class (to allow some visual feedback)				
